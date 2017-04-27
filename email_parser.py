@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import email.message, email.parser, email, json, re, email.utils, pickle, nltk,settings
+import email.message, email.parser, email, json, re, email.utils, pickle, nltk,settings, urllib2, time
 from os import listdir
 from time import strftime
-from urllib2 import Request, urlopen
 
 
-new_name_dict = {'Toni Porter':'Congressman Mike Pompeo','Congressman Tony Cardenas':'Congressman Tony Cárdenas', 'Senator Robert Menendez':'Senator Robert Menéndez', 'U.S. Senator Bob Menendez':'Senator Robert Menéndez','U.S. Senator Robert Menendez':'Senator Robert Menéndez','Fred':'Fred Upton', 'ROGERS E-NEWS':'Congressman Hal Rogers','kilili, e':'Gregorio Kilili Camacho Sablan','Eric Steklow': 'Ami Bera', 'Afnan Rashid': 'Hansen Clarke', 'Sharon Wallca': 'Hansen Clarke', 'Laurel Makries': 'Hansen Clarke', 'Rory Sheehan': 'Bill Delahunt', 'TX29Newsletters': 'Gene Green', 'Veronica Custer': 'Gene Green', 'Ashley Nagoaka': 'Colleen Hanabusa', 'Nathan White': 'Congressman Dennis Kucinich', 'CA33TLIMA': 'Ted Lieu', 'Daniel Schwarz':'Jerry Nadler','Maura Cordova':'Ed Pastor','Campbell, Nyaesia':'Terri Sewell', 'Jefferson, Deshundra':'Terri Sewell','NJ10DPima@mail.house.gov':'Donald Payne','MN07, Subscriptions':'Collin Peterson','Jose Borjon':'Silvestre Reyes', 'Claudia L. Ordaz':'Silvestre Reyes','Newsletter, MD02':'Dutch Ruppersberger','Richmond, Tavita':'Eni Faleomavaega','Rebecca.Alery@mail.house.gov':'Tom Emmer', 'Parker, Eric':'Frederica Wilson', 'Dan.Kotman@mail.house.gov':'Michele Bachmann', "The Leader's Daily Schedule":'Eric Cantor','Wasserstein, Rebecca':'Carlos Curbelo','Newsletter, MO08':'Jo Ann Emerson', 'Sok, Justin':'Jo Ann Emerson','Meghan Snyder':'Jim Jordan','Landon, Justin':'Jerry Lewis','Blue Angels':'Buck McKeon','CapitolConnection Newsletter':'Gary Miller','RonRaulmedia':'Ron Paul','sessions.newsletter@mail.house.gov':'Pete Sessions','Times, Thompson':'Glenn Thompson','David':'David Valadao','Mail___Outbound/Computerworks/US%MI09@US.House.gov':'Sander Levin','newsletter@begich.senate.gov':'Senator Begich','noreply@begich.senate.gov':'Senator Begich','Buchsbaum, Andy (Cardin)':'Ben Cardin', 'senator':'Senator Conrad','Bryan DeAngelis':'Chris Dodd', 'correspondence_reply@lieberman.senate.gov':'Joe Lieberman','enewsletters@manchin.senate.gov':'Senator Manchin','senator@mikulski.senate.gov':'Senator Mikulski','Teare, Caitlin (Ben Nelson)':'Ben Nelson','Sarah Kaopuiki':'Senator Brian Schatz','George Carvalho - Office of Senator Whitehouse':'Senator Sheldon Whitehouse','Tony Simon':'Senator Sheldon Whitehouse','newsletter@bunning.senate.gov':'Senator Bunning','newsletter@ensign.senate.gov':'Senator Ensign','enewsletter@lgraham.senate.gov':'Senator Lindsey Graham','enewsletter@hoeven.senate.gov':'Senator John Hoeven','Office_SenJohanns@johanns.senate.gov':'Senator Mike Johanns','Mike_Johanns@johanns.senate.gov':'Senator Mike Johanns','JamesRisch_OutboxOnly@risch.senate.gov':'Senator James Risch','newsletter@shelby.senate.gov':'Senator Richard Shelby','Van der Lugt, Roel':'Adam Smith','Kildee eNewsletter':'Dale Kildee', 'Senator Bob Menendez':'Senator Robert Menéndez','MN01Newsletter':'Congressman Tim Walz','Langer, Jack':'Devin Nunes','Fred ':'Fred Upton','Andre':'Andre Carson','Brad':'Brad Wenstrup','The Civil Rights Act of 1964':'Congressman Bill Foster',"Donna's Newsletter":'Donna Christensen','Villari, Gena':'Eric Cantor','Cordova, Maura':'Ed Pastor','Langer, Jack':'Devin Nunes','Phelan, Richard Andrew':'Hank Johnson','Wes Battle': 'Congressman J. Randy Forbes','Maggie Seidel':'Congressman Morgan Griffith','Jennifer Hazelton':'Congressman Tom Graves','Nagaoka, Ashley':'Colleen Hanabusa','Winters, Natalie':'Congressman Collin C. Peterson','Mena, Sharlett':'Congressman Albio Sires','ROGERS NEWS':'Congressman Hal Rogers','Congressman Mario Diaz Balart':'Congressman Mario Diaz-Balart','Keystone Pipeline':'Congressman Blaine Luetkemeyer','IN08enews':'Congressman Larry Bucshon','Entenman, Debra':'Congressman Adam Smith','Beth Breeding':'Congressman Morgan Griffith','Fennick, Renita':'Tom Marino','e-news-wi06':'Congressman Tom Petri','MSNBC Interview Tonight on Inequality in America':'Congressman John Garamendi', 'Cary Wright':'Congressman Mac Thornberry','Manufacturing Caucus':'Congressman Don Manzullo', 'Vincent M. Perez':'Representative Silvestre Reyes','Kingston Press Office':'Congressman Jack Kingston','Ashley L. Muschnick':'Congressman Ted Deutch','Breeding, Beth':'Morgan Griffith','MS04 Newsletter':'Congressman Steven Palazzo','Allison, William':'Congressman James Lankford','Rashid, Afnan':'Hansen Clarke','FL02ENEWS':'Congressman Steve Southerland','Ashley Mushnick':'Congressman Ted Deutch','NH02enews':'Congressman Charles Bass','Zimmerman, Stefani':'Congressman Paul Gosar','NewsletterNV03':'Congressman Joe Heck','Baron, Luke':'Congressman Adam Smith','Media, KS01':'Congressman Tim Huelskamp','CHUCK GRASSLEY':'Senator Chuck Grassely','Drogus, Jennifer':'Congressman Rob Woodall','KINGSTONPRESSOFFICE@mail.house.gov':'Congressman Jack Kingston','Popelka, Brecke':'Representative Martha Roby','Abney, Allison':'Congresswoman Terri A. Sewell','e-Newsletter, VA05':'Congressman Robert Hurt','Rawat, Vinod':'Congresswoman Terri A. Sewell',"Norm's Newsletter":'Norm Dicks','Max News':'Senator Max Baucus','Sheehan, Rory':'Bill Delahunt','Shedd, Leslie':'Congressman Frank Lucas','Audra McGeorge':'Rep. Ed Royce','Sillin, Nathaniel':'Congressman Mike Coffman','Andel, Michael':'Congressman David Scott','Orme, Katie':'Congressman John Shadegg','Slusher, Eric':'Congresswoman Niki Tsongas','Brock McCleary':'Congressman Patrick McHenry', 'Congressman Ben Ray Lujan':'Congressman Ben Luján', 'Congresswoman Linda Snchez':'Congresswoman Linda Sánchez', 'Congresswoman Linda T. Snchez':'Congresswoman Linda Sánchez', 'Sarah Kuziomko':'Congressman Tim Walberg', 'Assistant Democratic Leader Press':'Congressman James E. Clyburn','Newsletter, IN07':'Congressman André Carson', 'Congressman Ben Ray Lujn':'Congressman Ben Ray Luján', 'KINGSTON PRESS OFFICE':'Congressman Jack Kingston', 'Ashley L. Mushnick':'Congressman Ted Deutch','sessions.newsletter@mail.house.gov':'Congressman Jeff Sessions', 'CA33TLIMA@mail.house.gov':'Congressman Ted Lieu', 'Mail___Outbound/Computerworks/US%MO08@US.House.gov':'Congressman Jason Smith', 'newsletter_kirk@kirk.senate.gov':'Senator Mark Kirk','congressmanmikehonda-ca17@mail.house.gov':'Congressman Mike Honda','donotreplymikehondaupdates@mail.house.gov':'Congressman Mike Honda','senator@isakson.senate.gov':'Senator Johnny Isakson','Press_Office@carper.senate.gov':'Senator Tom Carper','senator_wyden@wyden.senate.gov':'Senator Ron Wyden','oh16Newsletter@mail.house.gov':'Congressman Jim Renacci','MN08RNIMA@mail.house.gov':'Congressman Rick Nolan','imanj10@mail.house.gov':'Congressman Donald M. Payne Jr.','KY06ABIMA@mail.house.gov':'Representative Andy Barr','ny20ima-113@mail.house.gov':'Congressman Paul Tonko','davidvitter@vitter.senate.gov':'Senator David Vitter','david_vitter@vitter.senate.gov':'Senator David Vitter','senator@conrad.senate.gov':'Senator Kent Conrad','matt.perry@mail.house.gov':'Congressman Adam Smith','roel.vanderlugt@mail.house.gov':'Congressman Adam Smith','debra.entenman@mail.house.gov':'Congressman Adam Smith','linh.thai@mail.house.gov':'Congressman Adam Smith','eNews@isakson.senate.gov':'Senator Johnny Isakson','shelley.berkley@mail.house.gov':'Congresswoman Shelley Berkley','enzi_newsletter@enzi.senate.gov':'Senator Mike Enzi','senator@mccaskill.senate.gov':'Senator Claire McCaskill','senator_levin@levin.senate.gov':'Senator Carl Levin','robert.goodlatte@mail.house.gov':'Congressman Bob Goodlatte','il03@housemail.house.gov':'Congressman Dan Lipinski','lamar_alexander@alexander.senate.gov':'Senator Lamar Alexander','David_vitter@vitter.senate.gov':'Senator David Vitter','newsletter@roberts.senate.gov':'Senator Pat Roberts','newsletter@inhofe.senate.gov':'Senator Jim Inhofe','do_not_reply@markudall.senate.gov':'U.S. Senator Mark Udall', 'Democratic Leader':'Representative Nancy Pelosi', 'Erin Moffet Hale':'Representative Patrick Murphy','Custer, Veronica':'Representative Gene Green','Matt Lira':'Representative Eric Cantor','Ben Veghte':'Representative Scott Garrett','Wallace, Sharon':'Represenative Hansen Clarke','George Carvalho':'Senator Sheldon Whitehouse', 'Congressman Luis Gutirrez': 'Luis Gutiérrez', 'Senator Bob Menendez': 'Robert Menéndez', 'senator@tomudall.senate.gov': 'Tom Udall', 'senator@tester.senate.gov': 'Jon Tester', 'Congresswoman Linda T. Snchez': 'Linda Sánchez', 'Grant Information': 'Orrin Hatch', 'Paucar, Theresa': 'Luis Gutiérrez', 'Senator@tomudall.senate.gov': 'Tom Udall', 'Congressman Tony Cardenas': 'Tony Cárdenas', 'U.S. Senator Robert Menendez': 'Robert Menéndez', 'Congressman Tony Crdenas': 'Tony Cárdenas', 'Eric Stecklow': 'Ami Bera', 'Congressman Ben Ray Lujan': 'Ben Luján', 'U.S. Senator Bob Menendez': 'Robert Menéndez', 'ted@tedcruz.org': 'Ted Cruz', 'Congresswoman Linda Snchez': 'Linda Sánchez', 'Senator Robert Menendez': 'Robert Menéndez', 'Dem Leader Press Office': 'Nancy Pelosi', 'Ortiz, Alvaro': 'Al Green', 'Newsletter, IN07': 'André Carson', 'Congressman Ben Ray Lujn': 'Ben Luján'}
+new_name_dict = {'Sanchez, Daniel':'Rep. Gloria Negrete McLeod','Sen. Jay Rockefeller (Rockefeller)':'Sen. John Rockefeller IV','Aumua Amata':'Congresswoman Amata Radewagen','Congresswoman Aumua Amata':'Congresswoman Amata Radewagen','Congresswoman Loretta Sanchez':'Congresswoman Loretta Sánchez', 'Toni Porter':'Congressman Mike Pompeo','Congressman Tony Cardenas':'Congressman Tony Cárdenas', 'Senator Robert Menendez':'Senator Robert Menéndez', 'U.S. Senator Bob Menendez':'Senator Robert Menéndez','U.S. Senator Robert Menendez':'Senator Robert Menéndez','Fred':'Fred Upton', 'ROGERS E-NEWS':'Congressman Hal Rogers','kilili, e':'Gregorio Kilili Camacho Sablan','Eric Steklow': 'Ami Bera', 'Afnan Rashid': 'Hansen Clarke', 'Sharon Wallca': 'Hansen Clarke', 'Laurel Makries': 'Hansen Clarke', 'Rory Sheehan': 'Bill Delahunt', 'TX29Newsletters': 'Gene Green', 'Veronica Custer': 'Gene Green', 'Ashley Nagoaka': 'Colleen Hanabusa', 'Nathan White': 'Congressman Dennis Kucinich', 'CA33TLIMA': 'Ted Lieu', 'Daniel Schwarz':'Jerry Nadler','Maura Cordova':'Ed Pastor','Campbell, Nyaesia':'Terri Sewell', 'Jefferson, Deshundra':'Terri Sewell','NJ10DPima@mail.house.gov':'Donald Payne','MN07, Subscriptions':'Collin Peterson','Jose Borjon':'Silvestre Reyes', 'Claudia L. Ordaz':'Silvestre Reyes','Newsletter, MD02':'Dutch Ruppersberger','Richmond, Tavita':'Eni Faleomavaega','Rebecca.Alery@mail.house.gov':'Tom Emmer', 'Parker, Eric':'Frederica Wilson', 'Dan.Kotman@mail.house.gov':'Michele Bachmann', "The Leader's Daily Schedule":'Eric Cantor','Wasserstein, Rebecca':'Carlos Curbelo','Newsletter, MO08':'Jo Ann Emerson', 'Sok, Justin':'Jo Ann Emerson','Meghan Snyder':'Jim Jordan','Landon, Justin':'Jerry Lewis','Blue Angels':'Buck McKeon','CapitolConnection Newsletter':'Gary Miller','RonRaulmedia':'Ron Paul','sessions.newsletter@mail.house.gov':'Pete Sessions','Times, Thompson':'Glenn Thompson','David':'David Valadao','Mail___Outbound/Computerworks/US%MI09@US.House.gov':'Sander Levin','newsletter@begich.senate.gov':'Senator Begich','noreply@begich.senate.gov':'Senator Begich','Buchsbaum, Andy (Cardin)':'Ben Cardin', 'senator':'Senator Conrad','Bryan DeAngelis':'Chris Dodd', 'correspondence_reply@lieberman.senate.gov':'Joe Lieberman','enewsletters@manchin.senate.gov':'Senator Manchin','senator@mikulski.senate.gov':'Senator Mikulski','Teare, Caitlin (Ben Nelson)':'Ben Nelson','Sarah Kaopuiki':'Senator Brian Schatz','George Carvalho - Office of Senator Whitehouse':'Senator Sheldon Whitehouse','Tony Simon':'Senator Sheldon Whitehouse','newsletter@bunning.senate.gov':'Senator Bunning','newsletter@ensign.senate.gov':'Senator Ensign','enewsletter@lgraham.senate.gov':'Senator Lindsey Graham','enewsletter@hoeven.senate.gov':'Senator John Hoeven','Office_SenJohanns@johanns.senate.gov':'Senator Mike Johanns','Mike_Johanns@johanns.senate.gov':'Senator Mike Johanns','JamesRisch_OutboxOnly@risch.senate.gov':'Senator James Risch','newsletter@shelby.senate.gov':'Senator Richard Shelby','Van der Lugt, Roel':'Adam Smith','Kildee eNewsletter':'Dale Kildee', 'Senator Bob Menendez':'Senator Robert Menéndez','MN01Newsletter':'Congressman Tim Walz','Langer, Jack':'Devin Nunes','Fred ':'Fred Upton','Andre':'Andre Carson','Brad':'Brad Wenstrup','The Civil Rights Act of 1964':'Congressman Bill Foster',"Donna's Newsletter":'Donna Christensen','Villari, Gena':'Eric Cantor','Cordova, Maura':'Ed Pastor','Langer, Jack':'Devin Nunes','Phelan, Richard Andrew':'Hank Johnson','Wes Battle': 'Congressman J. Randy Forbes','Maggie Seidel':'Congressman Morgan Griffith','Jennifer Hazelton':'Congressman Tom Graves','Nagaoka, Ashley':'Colleen Hanabusa','Winters, Natalie':'Congressman Collin C. Peterson','Mena, Sharlett':'Congressman Albio Sires','ROGERS NEWS':'Congressman Hal Rogers','Congressman Mario Diaz Balart':'Congressman Mario Diaz-Balart','Keystone Pipeline':'Congressman Blaine Luetkemeyer','IN08enews':'Congressman Larry Bucshon','Entenman, Debra':'Congressman Adam Smith','Beth Breeding':'Congressman Morgan Griffith','Fennick, Renita':'Tom Marino','e-news-wi06':'Congressman Tom Petri','MSNBC Interview Tonight on Inequality in America':'Congressman John Garamendi', 'Cary Wright':'Congressman Mac Thornberry','Manufacturing Caucus':'Congressman Don Manzullo', 'Vincent M. Perez':'Representative Silvestre Reyes','Kingston Press Office':'Congressman Jack Kingston','Ashley L. Muschnick':'Congressman Ted Deutch','Breeding, Beth':'Morgan Griffith','MS04 Newsletter':'Congressman Steven Palazzo','Allison, William':'Congressman James Lankford','Rashid, Afnan':'Hansen Clarke','FL02ENEWS':'Congressman Steve Southerland','Ashley Mushnick':'Congressman Ted Deutch','NH02enews':'Congressman Charles Bass','Zimmerman, Stefani':'Congressman Paul Gosar','NewsletterNV03':'Congressman Joe Heck','Baron, Luke':'Congressman Adam Smith','Media, KS01':'Congressman Tim Huelskamp','CHUCK GRASSLEY':'Senator Chuck Grassely','Drogus, Jennifer':'Congressman Rob Woodall','KINGSTONPRESSOFFICE@mail.house.gov':'Congressman Jack Kingston','Popelka, Brecke':'Representative Martha Roby','Abney, Allison':'Congresswoman Terri A. Sewell','e-Newsletter, VA05':'Congressman Robert Hurt','Rawat, Vinod':'Congresswoman Terri A. Sewell',"Norm's Newsletter":'Norm Dicks','Max News':'Senator Max Baucus','Sheehan, Rory':'Bill Delahunt','Shedd, Leslie':'Congressman Frank Lucas','Audra McGeorge':'Rep. Ed Royce','Sillin, Nathaniel':'Congressman Mike Coffman','Andel, Michael':'Congressman David Scott','Orme, Katie':'Congressman John Shadegg','Slusher, Eric':'Congresswoman Niki Tsongas','Brock McCleary':'Congressman Patrick McHenry', 'Congressman Ben Ray Lujan':'Congressman Ben Luján', 'Congresswoman Linda Snchez':'Congresswoman Linda Sánchez', 'Congresswoman Linda T. Snchez':'Congresswoman Linda Sánchez','Congresswoman Linda Sanchez':'Congresswoman Linda Sánchez', 'Sarah Kuziomko':'Congressman Tim Walberg', 'Assistant Democratic Leader Press':'Congressman James E. Clyburn','Newsletter, IN07':'Congressman André Carson', 'Congressman Ben Ray Lujn':'Congressman Ben Ray Luján', 'KINGSTON PRESS OFFICE':'Congressman Jack Kingston', 'Ashley L. Mushnick':'Congressman Ted Deutch','sessions.newsletter@mail.house.gov':'Congressman Jeff Sessions', 'CA33TLIMA@mail.house.gov':'Congressman Ted Lieu', 'Mail___Outbound/Computerworks/US%MO08@US.House.gov':'Congressman Jason Smith', 'newsletter_kirk@kirk.senate.gov':'Senator Mark Kirk','congressmanmikehonda-ca17@mail.house.gov':'Congressman Mike Honda','donotreplymikehondaupdates@mail.house.gov':'Congressman Mike Honda','senator@isakson.senate.gov':'Senator Johnny Isakson','Press_Office@carper.senate.gov':'Senator Tom Carper','senator_wyden@wyden.senate.gov':'Senator Ron Wyden','oh16Newsletter@mail.house.gov':'Congressman Jim Renacci','MN08RNIMA@mail.house.gov':'Congressman Rick Nolan','imanj10@mail.house.gov':'Congressman Donald M. Payne Jr.','KY06ABIMA@mail.house.gov':'Representative Andy Barr','ny20ima-113@mail.house.gov':'Congressman Paul Tonko','davidvitter@vitter.senate.gov':'Senator David Vitter','david_vitter@vitter.senate.gov':'Senator David Vitter','senator@conrad.senate.gov':'Senator Kent Conrad','matt.perry@mail.house.gov':'Congressman Adam Smith','roel.vanderlugt@mail.house.gov':'Congressman Adam Smith','debra.entenman@mail.house.gov':'Congressman Adam Smith','linh.thai@mail.house.gov':'Congressman Adam Smith','eNews@isakson.senate.gov':'Senator Johnny Isakson','shelley.berkley@mail.house.gov':'Congresswoman Shelley Berkley','enzi_newsletter@enzi.senate.gov':'Senator Mike Enzi','senator@mccaskill.senate.gov':'Senator Claire McCaskill','senator_levin@levin.senate.gov':'Senator Carl Levin','robert.goodlatte@mail.house.gov':'Congressman Bob Goodlatte','il03@housemail.house.gov':'Congressman Dan Lipinski','lamar_alexander@alexander.senate.gov':'Senator Lamar Alexander','David_vitter@vitter.senate.gov':'Senator David Vitter','newsletter@roberts.senate.gov':'Senator Pat Roberts','newsletter@inhofe.senate.gov':'Senator Jim Inhofe','do_not_reply@markudall.senate.gov':'U.S. Senator Mark Udall', 'Democratic Leader':'Representative Nancy Pelosi', 'Erin Moffet Hale':'Representative Patrick Murphy','Custer, Veronica':'Representative Gene Green','Matt Lira':'Representative Eric Cantor','Ben Veghte':'Representative Scott Garrett','Wallace, Sharon':'Represenative Hansen Clarke','George Carvalho':'Senator Sheldon Whitehouse', 'Congressman Luis Gutirrez': 'Luis Gutiérrez', 'Senator Bob Menendez': 'Robert Menéndez', 'senator@tomudall.senate.gov': 'Tom Udall', 'senator@tester.senate.gov': 'Jon Tester', 'Congresswoman Linda T. Snchez': 'Linda Sánchez', 'Grant Information': 'Orrin Hatch', 'Paucar, Theresa': 'Luis Gutiérrez', 'Senator@tomudall.senate.gov': 'Tom Udall', 'Congressman Tony Cardenas': 'Tony Cárdenas', 'U.S. Senator Robert Menendez': 'Robert Menéndez', 'Congressman Tony Crdenas': 'Tony Cárdenas', 'Eric Stecklow': 'Ami Bera', 'Congressman Ben Ray Lujan': 'Ben Luján', 'U.S. Senator Bob Menendez': 'Robert Menéndez', 'ted@tedcruz.org': 'Ted Cruz', 'Congresswoman Linda Snchez': 'Linda Sánchez', 'Senator Robert Menendez': 'Robert Menéndez', 'Dem Leader Press Office': 'Nancy Pelosi', 'Ortiz, Alvaro': 'Al Green', 'Newsletter, IN07': 'André Carson', 'Congressman Ben Ray Lujn': 'Ben Luján'}
 bad_names = []
 
 class Email(object):
@@ -66,25 +65,44 @@ class Email(object):
    
     def get_info(self):
         '''Returns a dictionary containing the api information of the sender of an email.'''
-        for member in self.congress:
-            if member['person']['lastname'] in self.name:
-                if member['person']['firstname'] in self.name:
-                #if the last name and first name/nick name are in self.name: get self.party
-                    return pull_api_info(member)
-                elif member['person']['nickname']:
-                    if member['person']['nickname'] in self.name:
-                        return pull_api_info(member)
-        #If the first loop didn't classify the email, search instead for just the first two letters
-        #of the first name, along with the full last name.
-        for member in self.congress:
-            if member['person']['lastname'] in self.name:
-                if member['person']['firstname'][:2] in self.name:
-                    return pull_api_info(member)
-        #If neither loop got the information, look just for the last name.
-        for member in self.congress:
-            if member['person']['lastname'] in self.name:
-                return pull_api_info(member)
-        #If this person couldn't be found, add to the list of bad names
+	for member in self.congress:
+			if member[0]['last_name'] in self.name:
+				if member[0]['first_name'] in self.name:
+					return pull_api_info(member)
+				# search for first 2 letters of first name
+				elif member[0]['first_name'][:2] in self.name:
+					return pull_api_info(member)
+			#if there is a 3 letter name mod at the end of the last name
+			elif member[0]['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
+				#cut off the last three characters
+				if member[0]['last_name'][:-4] in self.name:
+					if member[0]['first_name'] in self.name:
+						return pull_api_info(member)
+					# search for first 2 letters of first name
+					elif member[0]['first_name'][:2] in self.name:
+						return pull_api_info(member)
+			#if II is at the end of the last name
+			elif member[0]['last_name'][-2:] == 'II':
+				#cut off the last two characters
+				if member[0]['last_name'][:-3] in self.name:
+					if member[0]['first_name'] in self.name:
+						return pull_api_info(member)
+				# search for first 2 letters of first name
+				elif member[0]['first_name'][:2] in self.name:
+					return pull_api_info(member)
+			#If nothing matches, just go by last name
+			if member[0]['last_name'] in self.name:
+				return pull_api_info(member)
+			elif member[0]['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
+				#cut off the last three characters
+				if member[0]['last_name'][:-4] in self.name:
+					return pull_api_info(member)
+			elif member[0]['last_name'][-2:] == 'II':
+				#cut off the last two characters
+				if member[0]['last_name'][:-3] in self.name:
+					return pull_api_info(member)
+			if "Beto O'Rourke" in self.name:
+				return beto_orourke()
         if self.name not in bad_names:
             bad_names.append(self.name)
         
@@ -186,20 +204,74 @@ def wordlist(text):
     return words
 
 def api_call():
-    '''Makes an api call and returns a JSOn object of information on the current US congress.'''
-    request = Request('https://www.govtrack.us/api/v2/role?startdate__gt=2003-01-01T00:00:00&limit=6000&sort=-enddate')
-    return json.load(urlopen(request), encoding='utf8')['objects']
+    '''Makes an api call and returns a list of information on the Congress members from the 111th-115th congress.'''
+    members = []
+    ids = []
+    for i in range(111,116):
+        url = "https://api.propublica.org/congress/v1/" + str(i) + "/house/members.json"
+        req = urllib2.Request(url)
+        req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+        res = urllib2.urlopen(req)
+        content = json.loads(res.read())
+        house_members = content['results'][0]['members']
+        for member in house_members:
+            if member['id'] not in ids:
+                ids.append(member['id'])
+                url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
+                req = urllib2.Request(url)
+                req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+                res = urllib2.urlopen(req)
+                content = json.loads(res.read())
+                members.append(content['results'])
+                time.sleep(.5)
+        time.sleep(.5)
+
+    for i in range(111, 116):
+        url = "https://api.propublica.org/congress/v1/" + str(i) + "/senate/members.json"
+        req = urllib2.Request(url)
+        req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+        res = urllib2.urlopen(req)
+        content = json.loads(res.read())
+        senate_members = content['results'][0]['members']
+        for member in senate_members:
+            if member['id'] not in ids:
+                ids.append(member['id'])
+                url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
+                req = urllib2.Request(url)
+                req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+                res = urllib2.urlopen(req)
+                content = json.loads(res.read())
+                members.append(content['results'])
+                time.sleep(1)
+        time.sleep(1)
+    return members;
 
 def pull_api_info(entry):
         '''Returns a dictionary of all the info from the API call.'''
         info_dict = {}
-        for key in entry:
-            if key == 'person':
-                for person_key in entry[key]:
-                    info_dict[person_key] = entry[key][person_key]
-            else:        
-                info_dict[key] = entry[key]
+        bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
+        for key in entry[0].keys():
+            if key not in bad_keys:
+                info_dict[key] = entry[0][key]
+        '''for key in entry[0]['roles'][0].keys():
+            if key not in bad_keys:
+                info_dict[key] = entry[0]['roles'][0][key]'''
         return info_dict
+
+def beto_orourke():
+	'''Returns the API info for Beto O'Rourke. Necessary due to encoding issue'''
+	info_dict = {}
+	bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
+	url = "https://api.propublica.org/congress/v1/members/O000170.json"
+    	req = urllib2.Request(url)
+	req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+    	res = urllib2.urlopen(req)
+    	content = json.loads(res.read())
+    	entry = content['results']
+    	for key in entry[0].keys():
+    		if key not in bad_keys:
+    			info_dict[key] = entry[0][key]
+   	return info_dict
 
 def separate(text):
     '''Takes text and separates it into a list of words'''
@@ -234,8 +306,8 @@ def stopwords(stopwords_fp=settings.stopwords_fp):
 def main():
     '''Guides the user through the program.'''
     directory = raw_input('Please enter the path to the directory of .eml files: ')
-    d = Directory(directory)
     json_fp = raw_input('Please enter the location of the json file you would like to create: ')
+    d = Directory(directory)
     d.convert_json(json_fp)
     print(bad_names)
 
