@@ -210,7 +210,7 @@ def api_call():
     for i in range(111,116):
         url = "https://api.propublica.org/congress/v1/" + str(i) + "/house/members.json"
         req = urllib2.Request(url)
-        req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+        req.add_header('X-API-Key', 'KEY')
         res = urllib2.urlopen(req)
         content = json.loads(res.read())
         house_members = content['results'][0]['members']
@@ -219,7 +219,7 @@ def api_call():
                 ids.append(member['id'])
                 url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
                 req = urllib2.Request(url)
-                req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+                req.add_header('X-API-Key', 'KEY')
                 res = urllib2.urlopen(req)
                 content = json.loads(res.read())
                 members.append(content['results'])
@@ -229,7 +229,7 @@ def api_call():
     for i in range(111, 116):
         url = "https://api.propublica.org/congress/v1/" + str(i) + "/senate/members.json"
         req = urllib2.Request(url)
-        req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+        req.add_header('X-API-Key', 'KEY')
         res = urllib2.urlopen(req)
         content = json.loads(res.read())
         senate_members = content['results'][0]['members']
@@ -238,7 +238,7 @@ def api_call():
                 ids.append(member['id'])
                 url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
                 req = urllib2.Request(url)
-                req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+                req.add_header('X-API-Key', 'KEY')
                 res = urllib2.urlopen(req)
                 content = json.loads(res.read())
                 members.append(content['results'])
@@ -264,7 +264,7 @@ def beto_orourke():
 	bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
 	url = "https://api.propublica.org/congress/v1/members/O000170.json"
     	req = urllib2.Request(url)
-	req.add_header('X-API-Key', 'jQapRZYRJK1rTKbHKBFIN8vBo8JwypDs72uPg8NI')
+	req.add_header('X-API-Key', 'KEY')
     	res = urllib2.urlopen(req)
     	content = json.loads(res.read())
     	entry = content['results']
