@@ -223,8 +223,8 @@ def api_call():
                 res = urllib2.urlopen(req)
                 content = json.loads(res.read())
                 members.append(content['results'])
-                time.sleep(.5)
-        time.sleep(.5)
+                time.sleep(2)
+        time.sleep(2)
 
     for i in range(111, 116):
         url = "https://api.propublica.org/congress/v1/" + str(i) + "/senate/members.json"
@@ -242,8 +242,8 @@ def api_call():
                 res = urllib2.urlopen(req)
                 content = json.loads(res.read())
                 members.append(content['results'])
-                time.sleep(1)
-        time.sleep(1)
+                time.sleep(2)
+        time.sleep(2)
     return members;
 
 def pull_api_info(entry):
@@ -262,6 +262,7 @@ def beto_orourke():
 	'''Returns the API info for Beto O'Rourke. Necessary due to encoding issue'''
 	info_dict = {}
 	bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
+	time.sleep(2)
 	url = "https://api.propublica.org/congress/v1/members/O000170.json"
     	req = urllib2.Request(url)
 	req.add_header('X-API-Key', 'KEY')
