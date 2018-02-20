@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import email.message, email.parser, email, json, re, email.utils, pickle, nltk,settings, urllib2, time, math
+import email.message, email.parser, email, json, re, email.utils, urllib2, time, math
 from os import listdir
 from time import strftime
 from datetime import datetime
@@ -63,52 +63,54 @@ class Email(object):
                 else:
                     self.subject = item[1]
                     #self.subject = remove_non_ascii(self.subject)
-   
+
     def get_info(self):
-        '''Returns a dictionary containing the api information of the sender of an email.'''
-	for member in self.congress:
-			if member[0]['last_name'] in self.name:
-				if member[0]['first_name'] in self.name:
+        for member in self.congress:
+            #print member
+            if member['last_name'] in self.name:
+				if member['first_name'] in self.name:
 					return pull_api_info(member)
 				# search for first 2 letters of first name
-				elif member[0]['first_name'][:2] in self.name:
+				elif member['first_name'][:2] in self.name:
 					return pull_api_info(member)
 			#if there is a 3 letter name mod at the end of the last name
-			elif member[0]['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
+            elif member['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
 				#cut off the last three characters
-				if member[0]['last_name'][:-4] in self.name:
-					if member[0]['first_name'] in self.name:
+				if member['last_name'][:-4] in self.name:
+					if member['first_name'] in self.name:
 						return pull_api_info(member)
 					# search for first 2 letters of first name
-					elif member[0]['first_name'][:2] in self.name:
+					elif member['first_name'][:2] in self.name:
 						return pull_api_info(member)
 			#if II is at the end of the last name
-			elif member[0]['last_name'][-2:] == 'II':
+            elif member['last_name'][-2:] == 'II':
 				#cut off the last two characters
-				if member[0]['last_name'][:-3] in self.name:
-					if member[0]['first_name'] in self.name:
+				if member['last_name'][:-3] in self.name:
+					if member['first_name'] in self.name:
 						return pull_api_info(member)
 				# search for first 2 letters of first name
-				elif member[0]['first_name'][:2] in self.name:
+				elif member['first_name'][:2] in self.name:
 					return pull_api_info(member)
 			#If nothing matches, just go by last name
-			if member[0]['last_name'] in self.name:
+            if member['last_name'] in self.name:
 				return pull_api_info(member)
-			elif member[0]['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
+            elif member['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
 				#cut off the last three characters
-				if member[0]['last_name'][:-4] in self.name:
+				if member['last_name'][:-4] in self.name:
 					return pull_api_info(member)
-			elif member[0]['last_name'][-2:] == 'II':
+            elif member['last_name'][-2:] == 'II':
 				#cut off the last two characters
-				if member[0]['last_name'][:-3] in self.name:
+				if member['last_name'][:-3] in self.name:
 					return pull_api_info(member)
-			if "Beto O'Rourke" in self.name:
-				return beto_orourke()
         if self.name not in bad_names:
             bad_names.append(self.name)
         
-    def construct_dict(self,classifier):
+    def construct_dict(self):
         '''Constructs a dictionary of email information.'''
+        #attributes = []
+        #for attr, value in self.__dict__.iteritems():
+        #    attributes += [attr]
+        #print attributes
         self.get_header()
         self.get_body()
         if self.valid == False:
@@ -123,15 +125,9 @@ class Email(object):
             email_dict['Body'] = self.body
             email_dict['Month'] = self.month
             email_dict['Year'] = self.year
-            if classifier:
-                if settings.extractor['use_extractor']:
-                    trimmed_txt = word_extractor(self.body)
-                    email_dict['assignment'] = classifier.classify(wordlist(trimmed_txt))
-                else:
-                    email_dict['assignment'] = classifier.classify(wordlist(self.body))
-            #email_dict['assignment'] = '1'
             return email_dict
         except:
+            print self.path + ' went wrong'
             return None
         
 class Directory(Email):
@@ -139,17 +135,11 @@ class Directory(Email):
         '''Initializes an instance of the Directory class.'''
         self.directory = directory
         self.congress = api_call()
-        if settings.classifier['use_classifier']:
-            self.classifier = load_pickle(settings.classifier['classifier_fp'])
-        else:
-            self.classifier = None
+        self.classifier = None
         
     def dir_list(self):
         '''Returns the list of all files in self.directory'''
-        try:
-            return listdir(self.directory)
-        except WindowsError as winErr:
-            print("Directory error: " + str((winErr)))
+        return listdir(self.directory)
         
     def dir_dict(self):
         '''Constructs a list of email dictionaries
@@ -157,7 +147,7 @@ class Directory(Email):
         eml_list = []
         for email in self.dir_list():
             self.path = self.directory + '/' + email
-            eml_dict = self.construct_dict(self.classifier)
+            eml_dict = self.construct_dict()
             if eml_dict:
                 eml_list.append(eml_dict)
         return eml_list
@@ -183,28 +173,8 @@ def remove_non_ascii(text):
     '''Removes any non-ascii characters from a string.'''
     return ''.join(i for i in text if ord(i)<128)
 
-def word_extractor(text, keyword=settings.extractor['keyword'], n=settings.extractor['str_length']):
-    '''Extracts n words before and after the keyword in a given text.'''
-    text = text.lower()
-    separated = text.partition(keyword)
-    if separated[2]:
-        neg = -1*n
-        before,after = separated[0].split()[neg:],separated[2].split()[:n]
-        before.extend(after)
-        return ' '.join(before)
-    else:
-        return text
-
-def wordlist(text):
-    '''Returns a list of words in the text.'''
-    words = {}
-    separated = separate(text)
-    for word in separated:
-        if word not in words.keys():
-            words[word] = 1
-    return words
-
 def get_current_congress():
+    '''Returns the current Congress number'''
     base = datetime(2017, 1, 3) # January 3rd, 2017. When 115th Congress began
     now = datetime.now() # The current date
 
@@ -217,112 +187,53 @@ def get_current_congress():
     add_to_congress = int(math.floor( (float(difference.days - leap_days) / 365) / 2)) # get the number of congresses that have passed since 115
     return 115 + add_to_congress
 
+def get_key():
+    '''Returns the API key used for ProPublica'''
+    with open('api_key.txt', 'r') as f:
+        return f.read()
+
 def api_call():
     '''Makes an api call and returns a list of information on the Congress members from the 111th-115th congress.'''
     members = []
-    ids = []
     current_congress = get_current_congress()
+    key = get_key()
+    # Get House members for every relevant Congress
     for i in range(111, current_congress + 1):
         url = "https://api.propublica.org/congress/v1/" + str(i) + "/house/members.json"
         req = urllib2.Request(url)
-        req.add_header('X-API-Key', 'KEY')
+        req.add_header('X-API-Key', key)
         res = urllib2.urlopen(req)
         content = json.loads(res.read())
-        house_members = content['results'][0]['members']
-        for member in house_members:
-            if member['id'] not in ids:
-                ids.append(member['id'])
-                url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
-                req = urllib2.Request(url)
-                req.add_header('X-API-Key', 'KEY')
-                res = urllib2.urlopen(req)
-                content = json.loads(res.read())
-                members.append(content['results'])
-                time.sleep(2)
+        members += content['results'][0]['members']
         time.sleep(2)
-
+    # Get Senate members for every relevant Congress
     for i in range(111, current_congress + 1):
         url = "https://api.propublica.org/congress/v1/" + str(i) + "/senate/members.json"
         req = urllib2.Request(url)
-        req.add_header('X-API-Key', 'KEY')
+        req.add_header('X-API-Key', key)
         res = urllib2.urlopen(req)
         content = json.loads(res.read())
-        senate_members = content['results'][0]['members']
-        for member in senate_members:
-            if member['id'] not in ids:
-                ids.append(member['id'])
-                url = "https://api.propublica.org/congress/v1/members/" + member['id'] +".json"
-                req = urllib2.Request(url)
-                req.add_header('X-API-Key', 'KEY')
-                res = urllib2.urlopen(req)
-                content = json.loads(res.read())
-                members.append(content['results'])
-                time.sleep(2)
+        members += content['results'][0]['members']
         time.sleep(2)
-    return members;
+    print members[0]
+    print members[1]
+    return members
 
 def pull_api_info(entry):
         '''Returns a dictionary of all the info from the API call.'''
         info_dict = {}
+        print 'ENTRY'
+        print entry
         bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
-        for key in entry[0].keys():
+        for key in entry.keys():
             if key not in bad_keys:
-                info_dict[key] = entry[0][key]
-        '''for key in entry[0]['roles'][0].keys():
-            if key not in bad_keys:
-                info_dict[key] = entry[0]['roles'][0][key]'''
+                info_dict[key] = entry[key]
         return info_dict
-
-def beto_orourke():
-	'''Returns the API info for Beto O'Rourke. Necessary due to encoding issue'''
-	info_dict = {}
-	bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
-	time.sleep(2)
-	url = "https://api.propublica.org/congress/v1/members/O000170.json"
-    	req = urllib2.Request(url)
-	req.add_header('X-API-Key', 'KEY')
-    	res = urllib2.urlopen(req)
-    	content = json.loads(res.read())
-    	entry = content['results']
-    	for key in entry[0].keys():
-    		if key not in bad_keys:
-    			info_dict[key] = entry[0][key]
-   	return info_dict
-
-def separate(text):
-    '''Takes text and separates it into a list of words'''
-    alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    stop_list = stopwords()
-    words = text.split()
-    standardwords = []
-    for word in words:
-        if word not in stop_list:
-            newstr = ''
-            for char in word:
-                if char.lower() in alphabet:
-                   newstr += char
-            if newstr != '':
-                standardwords.append(newstr)
-    return map(lambda x: x.lower(),standardwords)
-    
-def load_pickle(pickle_fp):
-    '''Loads a .pickle file and returns the object.'''
-    f = open(pickle_fp,'rb')
-    content = pickle.load(f)
-    f.close()
-    return content
-
-def stopwords(stopwords_fp=settings.stopwords_fp):
-    '''Returns a list of stopwords from the given stopwords file.'''
-    with open(stopwords_fp) as f:
-        content = f.readlines()
-    lines = [line.rstrip() for line in content]
-    return lines
 
 def main():
     '''Guides the user through the program.'''
-    directory = raw_input('Please enter the path to the directory of .eml files: ')
-    json_fp = raw_input('Please enter the location of the json file you would like to create: ')
+    directory = '../2000_eml_files' #raw_input('Please enter the path to the directory of .eml files: ')
+    json_fp = '../bulk_test.json' #raw_input('Please enter the location of the json file you would like to create: ')
     d = Directory(directory)
     d.convert_json(json_fp)
     print(bad_names)
