@@ -66,7 +66,6 @@ class Email(object):
 
     def get_info(self):
         for member in self.congress:
-            #print member
             if member['last_name'] in self.name:
 				if member['first_name'] in self.name:
 					return pull_api_info(member)
@@ -107,17 +106,12 @@ class Email(object):
         
     def construct_dict(self):
         '''Constructs a dictionary of email information.'''
-        #attributes = []
-        #for attr, value in self.__dict__.iteritems():
-        #    attributes += [attr]
-        #print attributes
         self.get_header()
         self.get_body()
         if self.valid == False:
             return False
         try:
             email_dict = self.get_info()
-            #email_dict = {'party':email_dict_temp['party'],'title_long':email_dict_temp['title_long']}
             email_dict['Subject'] = self.subject
             email_dict['Name'] = self.name
             email_dict['Address'] = self.address
@@ -127,7 +121,6 @@ class Email(object):
             email_dict['Year'] = self.year
             return email_dict
         except:
-            print self.path + ' went wrong'
             return None
         
 class Directory(Email):
@@ -149,6 +142,11 @@ class Directory(Email):
             self.path = self.directory + '/' + email
             eml_dict = self.construct_dict()
             if eml_dict:
+            	# Set full party name
+            	if eml_dict['party'] == 'R':
+            		eml_dict['party'] = 'Republican'
+            	if eml_dict['party'] == 'D':
+            		eml_dict['party'] = 'Democrat'
                 eml_list.append(eml_dict)
         return eml_list
         
@@ -215,15 +213,11 @@ def api_call():
         content = json.loads(res.read())
         members += content['results'][0]['members']
         time.sleep(2)
-    print members[0]
-    print members[1]
     return members
 
 def pull_api_info(entry):
         '''Returns a dictionary of all the info from the API call.'''
         info_dict = {}
-        print 'ENTRY'
-        print entry
         bad_keys = ['youtube_account', 'rss_url', 'times_tag', 'times_topics_url', 'most_recent_vote', 'url', 'missed_votes_pct', 'phone', 'contact_form', 'bills_cosponsored']
         for key in entry.keys():
             if key not in bad_keys:
