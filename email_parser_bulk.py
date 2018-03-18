@@ -57,7 +57,7 @@ class Email(object):
                     self.month = strftime('%m',email.utils.parsedate(item[1]))
                     self.year = strftime('%Y',email.utils.parsedate(item[1]))
                 except:
-                    print self.path
+                    #print self.path
                     self.valid = False
             if item[0] == 'Subject':
                 if item[1].startswith("=?utf-8?") or item[1].startswith("=?UTF-8?"):
@@ -66,7 +66,7 @@ class Email(object):
                     # ^^^ breaks program when encounters subject encoded with "iso-8859"
                 else:
                     self.subject = item[1]
-                    #self.subject = remove_non_ascii(self.subject)
+                    self.subject = remove_non_ascii(self.subject)
 
     def get_info(self):
         for member in self.congress:
@@ -156,8 +156,8 @@ class Directory(Email):
         
     def convert_json(self, json_path):
         '''Creates a json file of email information at the specified path.'''
-        with open(json_path,'w') as json_file:
-            json.dump(self.dir_dict(),json_file)
+       with open(json_path,'w') as json_file:
+            json.dump(self.dir_dict(), json_file)
         
 def remove_junk(string):
     '''Removes whitespace characters, escapes, and links from a string.'''
