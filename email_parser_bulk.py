@@ -52,9 +52,13 @@ class Email(object):
                     if self.name == entry:
                         self.name = new_name_dict[entry]
             if item[0] == 'Date':
-                self.date = strftime('%m/%d/%Y',email.utils.parsedate(item[1]))
-                self.month = strftime('%m',email.utils.parsedate(item[1]))
-                self.year = strftime('%Y',email.utils.parsedate(item[1]))
+                try:
+                    self.date = strftime('%m/%d/%Y',email.utils.parsedate(item[1]))
+                    self.month = strftime('%m',email.utils.parsedate(item[1]))
+                    self.year = strftime('%Y',email.utils.parsedate(item[1]))
+                except:
+                    print self.path
+                    self.valid = False
             if item[0] == 'Subject':
                 if item[1].startswith("=?utf-8?") or item[1].startswith("=?UTF-8?"):
                     self.subject, encoding2 = email.Header.decode_header(item[1])[0]
@@ -226,7 +230,7 @@ def pull_api_info(entry):
 
 def main():
     '''Guides the user through the program.'''
-    directory = '../2000_eml_files' #raw_input('Please enter the path to the directory of .eml files: ')
+    directory = '../eml-2009' #raw_input('Please enter the path to the directory of .eml files: ')
     json_fp = '../bulk_test.json' #raw_input('Please enter the location of the json file you would like to create: ')
     d = Directory(directory)
     d.convert_json(json_fp)
