@@ -156,7 +156,7 @@ class Directory(Email):
         
     def convert_json(self, json_path):
         '''Creates a json file of email information at the specified path.'''
-       with open(json_path,'w') as json_file:
+        with open(json_path,'w') as json_file:
             json.dump(self.dir_dict(), json_file)
         
 def remove_junk(string):
