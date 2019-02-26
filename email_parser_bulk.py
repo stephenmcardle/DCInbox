@@ -57,7 +57,6 @@ class Email(object):
                     self.month = strftime('%m',email.utils.parsedate(item[1]))
                     self.year = strftime('%Y',email.utils.parsedate(item[1]))
                 except:
-                    #print self.path
                     self.valid = False
             if item[0] == 'Subject':
                 if item[1].startswith("=?utf-8?") or item[1].startswith("=?UTF-8?"):
@@ -94,17 +93,21 @@ class Email(object):
 				# search for first 2 letters of first name
 				elif member['first_name'][:2] in self.name:
 					return pull_api_info(member)
-			#If nothing matches, just go by last name
+        return None
+
+    def get_info_last_name_only(self):
+        for member in self.congress:
+            #If nothing matches, just go by last name
             if member['last_name'] in self.name:
-				return pull_api_info(member)
+                return pull_api_info(member)
             elif member['last_name'][-3:] in ['Jr.', 'Sr.', 'III']:
-				#cut off the last three characters
-				if member['last_name'][:-4] in self.name:
-					return pull_api_info(member)
+                #cut off the last three characters
+                if member['last_name'][:-4] in self.name:
+                    return pull_api_info(member)
             elif member['last_name'][-2:] == 'II':
-				#cut off the last two characters
-				if member['last_name'][:-3] in self.name:
-					return pull_api_info(member)
+                #cut off the last two characters
+                if member['last_name'][:-3] in self.name:
+                    return pull_api_info(member)
         if self.name not in bad_names:
             bad_names.append(self.name)
         
@@ -116,6 +119,8 @@ class Email(object):
             return False
         try:
             email_dict = self.get_info()
+            if email_dict == None:
+                email_dict = self.get_info_last_name_only()
             email_dict['Subject'] = self.subject
             email_dict['Name'] = self.name
             email_dict['Address'] = self.address
@@ -230,7 +235,7 @@ def pull_api_info(entry):
 
 def main():
     '''Guides the user through the program.'''
-    directory = '../eml-2009' #raw_input('Please enter the path to the directory of .eml files: ')
+    directory = '../2000_eml_files' #raw_input('Please enter the path to the directory of .eml files: ')
     json_fp = '../bulk_test.json' #raw_input('Please enter the location of the json file you would like to create: ')
     d = Directory(directory)
     d.convert_json(json_fp)
